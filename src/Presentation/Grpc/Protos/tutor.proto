@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package tutor.service;
+
+service TutorService {
+  rpc CreateTutor (CreateTutorRequest) returns (CreateTutorResponse);
+  rpc UpdateTutor (UpdateTutorRequest) returns (UpdateTutorResponse);
+  rpc GetTutor (GetTutorRequest) returns (GetTutorResponse);
+  rpc DeactivateTutor (DeactivateTutorRequest) returns (DeactivateTutorResponse);
+}
+
+message CreateTutorRequest {
+  string first_name = 1;
+  string last_name = 2;
+  string email = 3;
+  optional string phone = 4;
+  optional string description = 5;
+  LessonFormat preferred_format = 6;
+  optional int32 average_lesson_duration_minutes = 7;
+  repeated TeachingSubjectRequest teaching_subjects = 8;
+}
+
+message TeachingSubjectRequest {
+  string subject_id = 1;
+  double price_per_hour = 2;
+  optional string description = 3;
+  int32 experience_years = 4;
+}
+
+message CreateTutorResponse {
+  string tutor_id = 1;
+  string full_name = 2;
+  string email = 3;
+  TutorStatus status = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message UpdateTutorRequest {
+  string tutor_id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  optional string phone = 4;
+  optional string description = 5;
+  LessonFormat preferred_format = 6;
+  optional int32 average_lesson_duration_minutes = 7;
+  repeated TeachingSubjectRequest teaching_subjects = 8;
+}
+
+message UpdateTutorResponse {
+  string tutor_id = 1;
+  google.protobuf.Timestamp updated_at = 2;
+}
+
+message GetTutorRequest {
+  string tutor_id = 1;
+}
+
+message GetTutorResponse {
+  string tutor_id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string email = 4;
+  optional string phone = 5;
+  optional string description = 6;
+  TutorStatus status = 7;
+  LessonFormat preferred_format = 8;
+  optional int32 average_lesson_duration_minutes = 9;
+  repeated TeachingSubjectResponse teaching_subjects = 10;
+  google.protobuf.Timestamp created_at = 11;
+  optional google.protobuf.Timestamp updated_at = 12;
+}
+
+message TeachingSubjectResponse {
+  string teaching_subject_id = 1;
+  string subject_id = 2;
+  string subject_name = 3;
+  double price_per_hour = 4;
+  optional string description = 5;
+  int32 experience_years = 6;
+}
+
+message DeactivateTutorRequest {
+  string tutor_id = 1;
+}
+
+message DeactivateTutorResponse {
+  string tutor_id = 1;
+  google.protobuf.Timestamp deactivated_at = 2;
+}
+
+enum TutorStatus {
+  ACTIVE = 0;
+  INACTIVE = 1;
+  SUSPENDED = 2;
+  DELETED = 3;
+}
+
+enum LessonFormat {
+  ONLINE = 0;
+  OFFLINE = 1;
+  HYBRID = 2;
+}

@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package tutor.events;
+
+message TutorCreatedEvent {
+  string tutor_id = 1;
+  string full_name = 2;
+  google.protobuf.Timestamp created_at = 3;
+}
+
+message TutorUpdatedEvent {
+  string tutor_id = 1;
+  string full_name = 2;
+  google.protobuf.Timestamp updated_at = 3;
+}
+
+message ScheduleUpdatedEvent {
+  string tutor_id = 1;
+  string slot_id = 2;
+  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Timestamp end_time = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message SlotReservedEvent {
+  string slot_id = 1;
+  string tutor_id = 2;
+  google.protobuf.Timestamp reserved_at = 3;
+}
+
+message SlotReleasedEvent {
+  string slot_id = 1;
+  string tutor_id = 2;
+  google.protobuf.Timestamp released_at = 3;
+}
