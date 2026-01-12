@@ -1,42 +1,42 @@
 using Application.Abstractions;
-using Infrastructure.Persistence.Abstractions;
+using Infrastructure.Persistence.Database;
+using Npgsql;
 
 namespace Infrastructure.Persistence;
 
 public class UnitOfWork : IUnitOfWork
 {
-    private readonly IConnectionProvider _connectionProvider;
-    private IConnection? _connection;
-    private bool _transactionStarted;
+    private readonly IDatabaseConnectionFactory _connectionFactory;
+    private NpgsqlTransaction? _transaction;
+    private NpgsqlConnection? _connection;
 
-    public UnitOfWork(IConnectionProvider connectionProvider)
+    public UnitOfWork(IDatabaseConnectionFactory connectionFactory)
     {
-        _connectionProvider = connectionProvider;
+        _connectionFactory = connectionFactory;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        if (_connection == null)
+        if (_transaction == null)
         {
             return 0;
         }
 
-        if (_transactionStarted)
+        try
         {
-            try
-            {
-                await _connection.CommitTransactionAsync(cancellationToken).ConfigureAwait(false);
-                _transactionStarted = false;
-            }
-            catch
-            {
-                await _connection.RollbackTransactionAsync(cancellationToken).ConfigureAwait(false);
-                _transactionStarted = false;
-                throw;
-            }
+            await _transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return 1;
         }
-
-        return 1;
+        catch
+        {
+            await _transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            throw;
+        }
+        finally
+        {
+            await DisposeTransactionAsync().ConfigureAwait(false);
+            await DisposeConnectionAsync().ConfigureAwait(false);
+        }
     }
 
     public async Task<bool> SaveEntitiesAsync(CancellationToken cancellationToken = default)
@@ -45,19 +45,34 @@ public class UnitOfWork : IUnitOfWork
         return result > 0;
     }
 
-    public async Task<IConnection> GetConnectionAsync(CancellationToken cancellationToken = default)
+    public async Task<NpgsqlTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
         if (_connection == null)
         {
-            _connection = await _connectionProvider.GetConnectionAsync(cancellationToken).ConfigureAwait(false);
-            await _connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            _transactionStarted = true;
+            _connection = await _connectionFactory.CreateConnectionAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        return _connection;
+        _transaction ??= await _connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+        return _transaction;
     }
 
     public async ValueTask DisposeAsync()
+    {
+        await DisposeTransactionAsync().ConfigureAwait(false);
+        await DisposeConnectionAsync().ConfigureAwait(false);
+    }
+
+    private async Task DisposeTransactionAsync()
+    {
+        if (_transaction != null)
+        {
+            await _transaction.DisposeAsync().ConfigureAwait(false);
+            _transaction = null;
+        }
+    }
+
+    private async Task DisposeConnectionAsync()
     {
         if (_connection != null)
         {

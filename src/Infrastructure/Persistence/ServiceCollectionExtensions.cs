@@ -1,5 +1,8 @@
 using Application.Abstractions;
-using Microsoft.EntityFrameworkCore;
+using Infrastructure.Persistence.Database;
+using Infrastructure.Persistence.Database.Migrations;
+using Infrastructure.Persistence.Database.Queries;
+using Infrastructure.Persistence.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,16 +15,33 @@ public static class ServiceCollectionExtensions
         IConfiguration configuration)
     {
         string? connectionString = configuration.GetConnectionString("DefaultConnection");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            IEnumerable<IConfigurationSection> allConnectionStrings = configuration.GetSection("ConnectionStrings").GetChildren();
+            string availableConnections = string.Join(", ", allConnectionStrings.Select(c => c.Key));
+            throw new InvalidOperationException(
+                $"Database connection string 'DefaultConnection' is not configured. " +
+                $"Available connection strings: {availableConnections}. " +
+                "Please check your appsettings.json and ensure 'DefaultConnection' is set.");
+        }
 
-        services.AddDbContext<PersistenceContext>(options =>
-            options.UseNpgsql(connectionString));
+        Console.WriteLine($"Using database connection: {connectionString}");
 
-        services.AddScoped<ITutorRepository, Repositories.TutorRepository>();
-        services.AddScoped<IScheduleSlotRepository, Repositories.ScheduleSlotRepository>();
-        services.AddScoped<ISubjectRepository, Repositories.SubjectRepository>();
-        services.AddScoped<ITutorValidationService, TutorValidationService>();
+        MigrationRunner.RunMigrations(connectionString);
+
+        services.AddSingleton<IDatabaseConnectionFactory, ConnectionFactory>();
+
+        services.AddScoped<ITutorQueries, NpgsqlTutorQueries>();
+        services.AddScoped<IScheduleSlotQueries, NpgsqlScheduleSlotQueries>();
+        services.AddScoped<ISubjectQueries, NpgsqlSubjectQueries>();
+
+        services.AddScoped<ITutorRepository, TutorRepository>();
+        services.AddScoped<IScheduleSlotRepository, ScheduleSlotRepository>();
+        services.AddScoped<ISubjectRepository, SubjectRepository>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        services.AddScoped<ITutorValidationService, TutorValidationService>();
 
         return services;
     }

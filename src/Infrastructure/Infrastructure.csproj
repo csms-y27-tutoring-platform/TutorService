@@ -2,6 +2,8 @@
     
     <ItemGroup>
       <PackageReference Include="Confluent.Kafka" />
+      <PackageReference Include="FluentMigrator" />
+      <PackageReference Include="FluentMigrator.Runner" />
       <PackageReference Include="Google.Protobuf" />
       <PackageReference Include="Grpc.AspNetCore" />
       <PackageReference Include="Grpc.AspNetCore.Server" />
@@ -21,10 +23,6 @@
     <ItemGroup>
       <ProjectReference Include="..\Application\Application.csproj" />
       <ProjectReference Include="..\Presentation\Presentation.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Persistence\Migrations\" />
     </ItemGroup>
 
 </Project>
