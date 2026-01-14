@@ -26,7 +26,7 @@ public class Tutor
 
     public Timestamp CreatedAt { get; private set; }
 
-    public DateTime? UpdatedAt { get; private set; }
+    public Timestamp UpdatedAt { get; private set; }
 
     public Tutor(
         Guid id,
@@ -36,7 +36,8 @@ public class Tutor
         string? phone,
         string? description,
         LessonFormat preferredFormat,
-        int? averageLessonDurationMinutes)
+        int? averageLessonDurationMinutes,
+        Timestamp updatedAt)
     {
         if (string.IsNullOrWhiteSpace(firstName))
             throw new ArgumentException("First name cannot be empty", nameof(firstName));
@@ -56,6 +57,7 @@ public class Tutor
         Status = TutorStatus.Active;
         PreferredFormat = preferredFormat;
         AverageLessonDurationMinutes = averageLessonDurationMinutes;
+        UpdatedAt = updatedAt;
         TeachingSubjects = new List<TeachingSubject>();
         CreatedAt = Timestamp.FromDateTime(DateTime.UtcNow);
     }
@@ -80,25 +82,25 @@ public class Tutor
         Description = description;
         PreferredFormat = preferredFormat;
         AverageLessonDurationMinutes = averageLessonDurationMinutes;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow);
     }
 
     public void Deactivate()
     {
         Status = TutorStatus.Inactive;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow);
     }
 
     public void Activate()
     {
         Status = TutorStatus.Active;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow);
     }
 
     public void Suspend()
     {
         Status = TutorStatus.Suspended;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow);
     }
 
     public void AddTeachingSubject(TeachingSubject subject)

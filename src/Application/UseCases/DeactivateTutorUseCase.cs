@@ -25,7 +25,7 @@ public class DeactivateTutorUseCase
         Tutor? tutor = await _tutorRepository.GetByIdAsync(tutorId, cancellationToken)
             .ConfigureAwait(false);
 
-        if (tutor == null)
+        if (tutor is null)
         {
             throw new TutorNotFoundException(tutorId);
         }

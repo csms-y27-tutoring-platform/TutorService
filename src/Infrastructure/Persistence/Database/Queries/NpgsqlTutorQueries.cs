@@ -1,4 +1,5 @@
 using Application.Models;
+using Google.Protobuf.WellKnownTypes;
 using Npgsql;
 
 namespace Infrastructure.Persistence.Database.Queries;
@@ -148,12 +149,12 @@ public class NpgsqlTutorQueries : ITutorQueries
         while (await subjectsReader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
             var teachingSubject = new TeachingSubject(
-                subjectsReader.GetGuid(0), // id
-                subjectsReader.GetGuid(1), // tutor_id
-                subjectsReader.GetGuid(2), // subject_id
-                subjectsReader.GetDecimal(3), // price_per_hour
-                subjectsReader.IsDBNull(4) ? null : subjectsReader.GetString(4), // description
-                subjectsReader.GetInt32(5)); // experience_years
+                subjectsReader.GetGuid(0),
+                subjectsReader.GetGuid(1),
+                subjectsReader.GetGuid(2),
+                subjectsReader.GetDecimal(3),
+                subjectsReader.IsDBNull(4) ? null : subjectsReader.GetString(4),
+                subjectsReader.GetInt32(5));
             teachingSubjects.Add(teachingSubject);
         }
 
@@ -170,7 +171,8 @@ public class NpgsqlTutorQueries : ITutorQueries
             reader.IsDBNull(4) ? null : reader.GetString(4),
             reader.IsDBNull(5) ? null : reader.GetString(5),
             (LessonFormat)reader.GetInt32(7),
-            reader.IsDBNull(8) ? null : reader.GetInt32(8));
+            reader.IsDBNull(8) ? null : reader.GetInt32(8),
+            Timestamp.FromDateTime(DateTime.UtcNow));
 
         var status = (TutorStatus)reader.GetInt32(6);
         if (status == TutorStatus.Inactive) tutor.Deactivate();

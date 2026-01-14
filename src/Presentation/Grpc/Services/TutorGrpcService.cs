@@ -1,7 +1,7 @@
-using Application.Models;
 using Application.UseCases;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Tutor.Service;
 using CreateTutorRequest = Application.Contracts.Tutors.CreateTutorRequest;
 using CreateTutorResponse = Application.Contracts.Tutors.CreateTutorResponse;
 using TeachingSubjectRequest = Application.Contracts.Tutors.TeachingSubjectRequest;
@@ -101,54 +101,52 @@ public class TutorGrpcService : Tutor.Service.TutorService.TutorServiceBase
         return new Tutor.Service.UpdateTutorResponse
         {
             TutorId = request.TutorId,
-            UpdatedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(DateTime.UtcNow),
+            UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow),
         };
     }
 
-    public override async Task<Tutor.Service.GetTutorResponse> GetTutor(
-        Tutor.Service.GetTutorRequest request,
+    public override async Task<GetTutorResponse> GetTutor(
+        GetTutorRequest request,
         ServerCallContext context)
     {
         try
         {
-            Application.Models.Tutor tutor = await _getTutorUseCase
+            Application.Contracts.Tutors.GetTutorResponse result = await _getTutorUseCase
                 .ExecuteAsync(Guid.Parse(request.TutorId), context.CancellationToken)
                 .ConfigureAwait(false);
 
-            var teachingSubjectResponses = new List<Tutor.Service.TeachingSubjectResponse>();
-            foreach (TeachingSubject teachingSubject in tutor.TeachingSubjects)
-            {
-                // TODO: Здесь нужно получить имя предмета из SubjectRepository
-                string subjectName = "Subject";
-
-                teachingSubjectResponses.Add(new Tutor.Service.TeachingSubjectResponse
+            var teachingSubjectResponses = result.TeachingSubjects
+                .Select<Application.Contracts.Tutors.TeachingSubjectResponse, TeachingSubjectResponse>(ts => new TeachingSubjectResponse
                 {
-                    TeachingSubjectId = teachingSubject.Id.ToString(),
-                    SubjectId = teachingSubject.SubjectId.ToString(),
-                    SubjectName = subjectName,
-                    PricePerHour = (double)teachingSubject.PricePerHour,
-                    Description = teachingSubject.Description ?? string.Empty,
-                    ExperienceYears = teachingSubject.ExperienceYears,
-                });
+                    SubjectId = ts.SubjectId.ToString(),
+                    SubjectName = ts.SubjectName,
+                    PricePerHour = (double)ts.PricePerHour,
+                    Description = ts.Description ?? string.Empty,
+                    ExperienceYears = ts.ExperienceYears,
+                })
+                .ToList();
+
+            var response = new GetTutorResponse
+            {
+                TutorId = result.Id.ToString(),
+                FirstName = result.FirstName,
+                LastName = result.LastName,
+                Email = result.Email,
+                Phone = result.Phone ?? string.Empty,
+                Description = result.Description ?? string.Empty,
+                Status = (Tutor.Service.TutorStatus)result.Status,
+                PreferredFormat = (Tutor.Service.LessonFormat)result.PreferredFormat,
+                CreatedAt = result.CreatedAt,
+            };
+
+            if (result.AverageLessonDurationMinutes.HasValue)
+            {
+                response.AverageLessonDurationMinutes = result.AverageLessonDurationMinutes.Value;
             }
 
-            return new Tutor.Service.GetTutorResponse
-            {
-                TutorId = tutor.Id.ToString(),
-                FirstName = tutor.FirstName,
-                LastName = tutor.LastName,
-                Email = tutor.Email,
-                Phone = tutor.Phone ?? string.Empty,
-                Description = tutor.Description ?? string.Empty,
-                Status = (Tutor.Service.TutorStatus)tutor.Status,
-                PreferredFormat = (Tutor.Service.LessonFormat)tutor.PreferredFormat,
-                AverageLessonDurationMinutes = tutor.AverageLessonDurationMinutes ?? 0,
-                TeachingSubjects = { teachingSubjectResponses },
-                CreatedAt = tutor.CreatedAt,
-                UpdatedAt = tutor.UpdatedAt.HasValue
-                    ? Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(tutor.UpdatedAt.Value)
-                    : null,
-            };
+            response.TeachingSubjects.AddRange(teachingSubjectResponses);
+
+            return response;
         }
         catch (Application.Exceptions.TutorNotFoundException ex)
         {

@@ -2,6 +2,7 @@ using Application.Abstractions;
 using Application.Contracts.Tutors;
 using Application.Exceptions;
 using Application.Models;
+using Google.Protobuf.WellKnownTypes;
 using TutorService.Application.Models;
 
 namespace Application.UseCases;
@@ -36,7 +37,8 @@ public class CreateTutorUseCase
             request.Phone,
             request.Description,
             request.PreferredFormat,
-            request.AverageLessonDurationMinutes);
+            request.AverageLessonDurationMinutes,
+            Timestamp.FromDateTime(DateTime.UtcNow));
 
         foreach (TeachingSubjectRequest subjectRequest in request.TeachingSubjects)
         {
