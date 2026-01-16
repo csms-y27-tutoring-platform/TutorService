@@ -4,7 +4,9 @@ using Grpc.Core;
 using Tutor.Service;
 using CreateTutorRequest = Application.Contracts.Tutors.CreateTutorRequest;
 using CreateTutorResponse = Application.Contracts.Tutors.CreateTutorResponse;
+using GetTutorResponse = Tutor.Service.GetTutorResponse;
 using TeachingSubjectRequest = Application.Contracts.Tutors.TeachingSubjectRequest;
+using TeachingSubjectResponse = Tutor.Service.TeachingSubjectResponse;
 using UpdateTutorRequest = Application.Contracts.Tutors.UpdateTutorRequest;
 
 namespace Presentation.Grpc.Services;

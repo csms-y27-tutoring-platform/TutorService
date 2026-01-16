@@ -11,10 +11,9 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./docker/migrations:/docker-entrypoint-initdb.d
+      - tutor_postgres_data:/var/lib/postgresql/data
     networks:
-      - tutor-network
+      - tutoring-platform-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -23,14 +22,14 @@ services:
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
-    container_name: tutor-service-zookeeper
+    container_name: tutoring-platform-zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
     networks:
-      - tutor-network
+      - tutoring-platform-network
     healthcheck:
       test: ["CMD", "bash", "-c", "echo stat | nc localhost 2181"]
       interval: 30s
@@ -39,7 +38,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
-    container_name: tutor-service-kafka
+    container_name: tutoring-platform-kafka
     depends_on:
       - zookeeper
     environment:
@@ -52,16 +51,54 @@ services:
     ports:
       - "9092:9092"
     networks:
-      - tutor-network
+      - tutoring-platform-network
     healthcheck:
       test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
       interval: 30s
       timeout: 10s
       retries: 3
 
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: tutoring-platform-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - tutoring-platform-network
+    entrypoint: [ "/bin/bash", "-c" ]
+    command: |
+      echo "Waiting for Kafka to be ready..."
+
+      counter=0
+      max_attempts=30
+
+      until kafka-topics --bootstrap-server kafka:9092 --list 2>/dev/null; do
+        if [ $counter -eq $max_attempts ]; then
+          echo "Kafka is not ready after $max_attempts attempts, exiting..."
+          exit 1
+        fi
+        echo "Waiting for Kafka... (attempt $((counter+1))/$max_attempts)"
+        sleep 5
+        counter=$((counter+1))
+      done
+
+      echo "Creating Kafka topics..."
+
+      kafka-topics --create --topic booking-created --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1 --if-not-exists
+      kafka-topics --create --topic booking-cancelled --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1 --if-not-exists
+      kafka-topics --create --topic booking-completed --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1 --if-not-exists
+      kafka-topics --create --topic reminder-before-lesson --bootstrap-server kafka:9092 --partitions 1 --replication-factor 1 --if-not-exists
+
+      echo "Listing topics:"
+      kafka-topics --list --bootstrap-server kafka:9092
+
+      echo "Topic creation completed"
+    restart: "no"
+
 volumes:
-  postgres_data:
+  tutor_postgres_data:
 
 networks:
-  tutor-network:
+  tutoring-platform-network:
     driver: bridge
