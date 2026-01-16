@@ -1,4 +1,4 @@
-using TutorService.Application.Models;
+using Application.Models;
 
 namespace Infrastructure.Persistence.Database.Queries;
 

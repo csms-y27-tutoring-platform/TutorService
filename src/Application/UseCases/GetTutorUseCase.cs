@@ -2,7 +2,6 @@ using Application.Abstractions;
 using Application.Contracts.Tutors;
 using Application.Exceptions;
 using Application.Models;
-using TutorService.Application.Models;
 
 namespace Application.UseCases;
 
@@ -61,8 +60,8 @@ public class GetTutorUseCase
             PreferredFormat = tutor.PreferredFormat,
             AverageLessonDurationMinutes = tutor.AverageLessonDurationMinutes,
             TeachingSubjects = teachingSubjectResponses,
-            CreatedAt = tutor.CreatedAt,
-            UpdatedAt = tutor.UpdatedAt,
+            CreatedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(tutor.CreatedAt),
+            UpdatedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(tutor.UpdatedAt),
         };
     }
 }

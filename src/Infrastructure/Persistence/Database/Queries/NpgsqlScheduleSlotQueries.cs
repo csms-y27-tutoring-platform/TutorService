@@ -45,7 +45,7 @@ public class NpgsqlScheduleSlotQueries : IScheduleSlotQueries
 
         using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.AddWithValue("@tutorId", tutorId);
-        command.Parameters.AddWithValue("@startTime", startTime);
+        command.Parameters.AddWithValue("@startTime", NpgsqlTypes.NpgsqlDbType.Timestamp, startTime);
 
         using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
 
@@ -96,8 +96,8 @@ public class NpgsqlScheduleSlotQueries : IScheduleSlotQueries
 
         using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.AddWithValue("@tutorId", tutorId);
-        command.Parameters.AddWithValue("@startTime", startTime);
-        command.Parameters.AddWithValue("@endTime", endTime);
+        command.Parameters.AddWithValue("@startTime", NpgsqlTypes.NpgsqlDbType.Timestamp, startTime);
+        command.Parameters.AddWithValue("@endTime", NpgsqlTypes.NpgsqlDbType.Timestamp, endTime);
         command.Parameters.AddWithValue("@availableStatus", (int)SlotStatus.Available);
 
         using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);

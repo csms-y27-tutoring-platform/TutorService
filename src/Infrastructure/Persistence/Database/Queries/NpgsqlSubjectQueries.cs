@@ -1,5 +1,5 @@
+using Application.Models;
 using Npgsql;
-using TutorService.Application.Models;
 
 namespace Infrastructure.Persistence.Database.Queries;
 

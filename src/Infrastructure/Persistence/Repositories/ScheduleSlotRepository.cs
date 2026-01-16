@@ -51,7 +51,7 @@ public class ScheduleSlotRepository : IScheduleSlotRepository
         command.Parameters.AddWithValue("@startTime", slot.StartTime);
         command.Parameters.AddWithValue("@endTime", slot.EndTime);
         command.Parameters.AddWithValue("@status", (int)slot.Status);
-        command.Parameters.AddWithValue("@createdAt", slot.CreatedAt);
+        command.Parameters.AddWithValue("@createdAt", DateTimeConverter.ToDatabaseDateTime(slot.CreatedAt));
 
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         return slot;

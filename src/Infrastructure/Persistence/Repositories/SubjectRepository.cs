@@ -1,8 +1,8 @@
 using Application.Abstractions;
+using Application.Models;
 using Infrastructure.Persistence.Database;
 using Infrastructure.Persistence.Database.Queries;
 using Npgsql;
-using TutorService.Application.Models;
 
 namespace Infrastructure.Persistence.Repositories;
 
@@ -44,7 +44,7 @@ public class SubjectRepository : ISubjectRepository
         command.Parameters.AddWithValue("@id", subject.Id);
         command.Parameters.AddWithValue("@name", subject.Name);
         command.Parameters.AddWithValue("@description", subject.Description ?? (object)DBNull.Value);
-        command.Parameters.AddWithValue("@createdAt", subject.CreatedAt);
+        command.Parameters.AddWithValue("@createdAt", DateTimeConverter.ToDatabaseDateTime(subject.CreatedAt));
 
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         return subject;

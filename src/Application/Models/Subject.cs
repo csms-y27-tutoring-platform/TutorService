@@ -1,4 +1,4 @@
-namespace TutorService.Application.Models;
+namespace Application.Models;
 
 public class Subject
 {

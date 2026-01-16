@@ -2,7 +2,6 @@ using Application.Abstractions;
 using Application.Contracts.Tutors;
 using Application.Exceptions;
 using Application.Models;
-using TutorService.Application.Models;
 
 namespace Application.UseCases;
 

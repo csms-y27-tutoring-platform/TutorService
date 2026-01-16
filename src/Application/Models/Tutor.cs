@@ -1,5 +1,3 @@
-using Google.Protobuf.WellKnownTypes;
-
 namespace Application.Models;
 
 public class Tutor
@@ -24,9 +22,9 @@ public class Tutor
 
     public ICollection<TeachingSubject> TeachingSubjects { get; private set; }
 
-    public Timestamp CreatedAt { get; private set; }
+    public DateTime CreatedAt { get; private set; }
 
-    public Timestamp UpdatedAt { get; private set; }
+    public DateTime UpdatedAt { get; private set; }
 
     public Tutor(
         Guid id,
@@ -37,7 +35,7 @@ public class Tutor
         string? description,
         LessonFormat preferredFormat,
         int? averageLessonDurationMinutes,
-        Timestamp updatedAt)
+        DateTime updatedAt)
     {
         if (string.IsNullOrWhiteSpace(firstName))
             throw new ArgumentException("First name cannot be empty", nameof(firstName));
@@ -59,7 +57,7 @@ public class Tutor
         AverageLessonDurationMinutes = averageLessonDurationMinutes;
         UpdatedAt = updatedAt;
         TeachingSubjects = new List<TeachingSubject>();
-        CreatedAt = Timestamp.FromDateTime(DateTime.UtcNow);
+        CreatedAt = DateTime.UtcNow;
     }
 
     public void Update(
@@ -82,25 +80,25 @@ public class Tutor
         Description = description;
         PreferredFormat = preferredFormat;
         AverageLessonDurationMinutes = averageLessonDurationMinutes;
-        UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow);
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void Deactivate()
     {
         Status = TutorStatus.Inactive;
-        UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow);
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void Activate()
     {
         Status = TutorStatus.Active;
-        UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow);
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void Suspend()
     {
         Status = TutorStatus.Suspended;
-        UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow);
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void AddTeachingSubject(TeachingSubject subject)

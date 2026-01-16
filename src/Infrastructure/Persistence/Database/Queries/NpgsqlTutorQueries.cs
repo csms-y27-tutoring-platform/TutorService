@@ -1,5 +1,4 @@
 using Application.Models;
-using Google.Protobuf.WellKnownTypes;
 using Npgsql;
 
 namespace Infrastructure.Persistence.Database.Queries;
@@ -172,7 +171,7 @@ public class NpgsqlTutorQueries : ITutorQueries
             reader.IsDBNull(5) ? null : reader.GetString(5),
             (LessonFormat)reader.GetInt32(7),
             reader.IsDBNull(8) ? null : reader.GetInt32(8),
-            Timestamp.FromDateTime(DateTime.UtcNow));
+            DateTime.UtcNow);
 
         var status = (TutorStatus)reader.GetInt32(6);
         if (status == TutorStatus.Inactive) tutor.Deactivate();

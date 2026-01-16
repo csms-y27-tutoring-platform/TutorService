@@ -2,8 +2,6 @@ using Application.Abstractions;
 using Application.Contracts.Tutors;
 using Application.Exceptions;
 using Application.Models;
-using Google.Protobuf.WellKnownTypes;
-using TutorService.Application.Models;
 
 namespace Application.UseCases;
 
@@ -38,7 +36,7 @@ public class CreateTutorUseCase
             request.Description,
             request.PreferredFormat,
             request.AverageLessonDurationMinutes,
-            Timestamp.FromDateTime(DateTime.UtcNow));
+            DateTime.UtcNow);
 
         foreach (TeachingSubjectRequest subjectRequest in request.TeachingSubjects)
         {
@@ -80,7 +78,7 @@ public class CreateTutorUseCase
             FullName = tutor.FullName,
             Email = tutor.Email,
             Status = tutor.Status,
-            CreatedAt = tutor.CreatedAt,
+            CreatedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(tutor.CreatedAt),
         };
     }
 }

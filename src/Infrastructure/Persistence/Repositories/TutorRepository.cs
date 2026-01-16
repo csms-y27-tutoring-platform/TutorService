@@ -48,7 +48,7 @@ public class TutorRepository : ITutorRepository
             tutorCommand.Parameters.AddWithValue("@status", (int)tutor.Status);
             tutorCommand.Parameters.AddWithValue("@preferredFormat", (int)tutor.PreferredFormat);
             tutorCommand.Parameters.AddWithValue("@averageLessonDurationMinutes", tutor.AverageLessonDurationMinutes ?? (object)DBNull.Value);
-            tutorCommand.Parameters.AddWithValue("@createdAt", tutor.CreatedAt);
+            tutorCommand.Parameters.AddWithValue("@createdAt", DateTimeConverter.ToDatabaseDateTime(tutor.CreatedAt));
 
             await tutorCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
@@ -65,7 +65,7 @@ public class TutorRepository : ITutorRepository
                 subjectCommand.Parameters.AddWithValue("@pricePerHour", teachingSubject.PricePerHour);
                 subjectCommand.Parameters.AddWithValue("@description", teachingSubject.Description ?? (object)DBNull.Value);
                 subjectCommand.Parameters.AddWithValue("@experienceYears", teachingSubject.ExperienceYears);
-                subjectCommand.Parameters.AddWithValue("@createdAt", teachingSubject.CreatedAt);
+                subjectCommand.Parameters.AddWithValue("@createdAt", DateTimeConverter.ToDatabaseDateTime(teachingSubject.CreatedAt));
 
                 await subjectCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
@@ -73,9 +73,11 @@ public class TutorRepository : ITutorRepository
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return tutor;
         }
-        catch
+        catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            Console.WriteLine($"Error in TutorRepository.AddAsync: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             throw;
         }
     }
@@ -128,7 +130,7 @@ public class TutorRepository : ITutorRepository
                 subjectCommand.Parameters.AddWithValue("@pricePerHour", teachingSubject.PricePerHour);
                 subjectCommand.Parameters.AddWithValue("@description", teachingSubject.Description ?? (object)DBNull.Value);
                 subjectCommand.Parameters.AddWithValue("@experienceYears", teachingSubject.ExperienceYears);
-                subjectCommand.Parameters.AddWithValue("@createdAt", teachingSubject.CreatedAt);
+                subjectCommand.Parameters.AddWithValue("@createdAt", DateTimeConverter.ToDatabaseDateTime(teachingSubject.CreatedAt));
 
                 await subjectCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
