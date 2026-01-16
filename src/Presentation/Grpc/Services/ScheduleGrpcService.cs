@@ -1,12 +1,11 @@
 using Application.UseCases;
 using Grpc.Core;
 using Tutor.Service;
-using CreateScheduleSlotRequest = Application.Contracts.Schedule.CreateScheduleSlotRequest;
-using ReserveSlotRequest = Application.Contracts.Schedule.ReserveSlotRequest;
+using static Tutor.Service.ScheduleService;
 
 namespace Presentation.Grpc.Services;
 
-public class ScheduleGrpcService : ScheduleService.ScheduleServiceBase
+public class ScheduleGrpcService : ScheduleServiceBase
 {
     private readonly CreateScheduleSlotUseCase _createScheduleSlotUseCase;
     private readonly ReserveSlotUseCase _reserveSlotUseCase;
@@ -22,60 +21,101 @@ public class ScheduleGrpcService : ScheduleService.ScheduleServiceBase
         _releaseSlotUseCase = releaseSlotUseCase;
     }
 
-    public async Task<CreateScheduleSlotResponse> CreateScheduleSlot(
-        CreateScheduleSlotRequest request,
+    public override async Task<CreateScheduleSlotResponse> CreateScheduleSlot(
+        global::Tutor.Service.CreateScheduleSlotRequest request,
         ServerCallContext context)
     {
-        var createRequest = new CreateScheduleSlotRequest
+        try
         {
-            TutorId = request.TutorId,
-            StartTime = request.StartTime,
-            EndTime = request.EndTime,
-        };
+            var createRequest = new Application.Contracts.Schedule.CreateScheduleSlotRequest
+            {
+                TutorId = Guid.Parse(request.TutorId),
+                StartTime = request.StartTime.ToDateTime(),
+                EndTime = request.EndTime.ToDateTime(),
+            };
 
-        Guid slotId = await _createScheduleSlotUseCase
-            .ExecuteAsync(createRequest, context.CancellationToken)
-            .ConfigureAwait(false);
+            Guid slotId = await _createScheduleSlotUseCase
+                .ExecuteAsync(createRequest, context.CancellationToken)
+                .ConfigureAwait(false);
 
-        return new CreateScheduleSlotResponse
+            return new CreateScheduleSlotResponse
+            {
+                SlotId = slotId.ToString(),
+            };
+        }
+        catch (Application.Exceptions.TutorNotFoundException ex)
         {
-            SlotId = slotId.ToString(),
-        };
+            throw new RpcException(new Status(StatusCode.NotFound, ex.Message));
+        }
+        catch (Application.Exceptions.TutorNotActiveException ex)
+        {
+            throw new RpcException(new Status(StatusCode.FailedPrecondition, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            throw new RpcException(new Status(StatusCode.Internal, $"Internal error: {ex.Message}"));
+        }
     }
 
-    public async Task<ReserveSlotResponse> ReserveSlot(
-        ReserveSlotRequest request,
+    public override async Task<ReserveSlotResponse> ReserveSlot(
+        global::Tutor.Service.ReserveSlotRequest request,
         ServerCallContext context)
     {
-        var reserveRequest = new ReserveSlotRequest
+        try
         {
-            SlotId = request.SlotId,
-            BookingId = request.BookingId,
-        };
+            var reserveRequest = new Application.Contracts.Schedule.ReserveSlotRequest
+            {
+                SlotId = Guid.Parse(request.SlotId),
+                BookingId = Guid.Parse(request.BookingId),
+            };
 
-        await _reserveSlotUseCase
-            .ExecuteAsync(reserveRequest, context.CancellationToken)
-            .ConfigureAwait(false);
+            await _reserveSlotUseCase
+                .ExecuteAsync(reserveRequest, context.CancellationToken)
+                .ConfigureAwait(false);
 
-        return new ReserveSlotResponse
+            return new ReserveSlotResponse
+            {
+                SlotId = request.SlotId,
+                ReservedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(DateTime.UtcNow),
+            };
+        }
+        catch (Application.Exceptions.SlotNotFoundException ex)
         {
-            SlotId = request.SlotId.ToString(),
-            ReservedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(DateTime.UtcNow),
-        };
+            throw new RpcException(new Status(StatusCode.NotFound, ex.Message));
+        }
+        catch (Application.Exceptions.SlotNotAvailableException ex)
+        {
+            throw new RpcException(new Status(StatusCode.FailedPrecondition, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            throw new RpcException(new Status(StatusCode.Internal, $"Internal error: {ex.Message}"));
+        }
     }
 
     public override async Task<ReleaseSlotResponse> ReleaseSlot(
         ReleaseSlotRequest request,
         ServerCallContext context)
     {
-        await _releaseSlotUseCase
-            .ExecuteAsync(Guid.Parse(request.SlotId), context.CancellationToken)
-            .ConfigureAwait(false);
-
-        return new ReleaseSlotResponse
+        try
         {
-            SlotId = request.SlotId,
-            ReleasedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(DateTime.UtcNow),
-        };
+            await _releaseSlotUseCase
+                .ExecuteAsync(Guid.Parse(request.SlotId), context.CancellationToken)
+                .ConfigureAwait(false);
+
+            return new ReleaseSlotResponse
+            {
+                SlotId = request.SlotId,
+                ReleasedAt = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(DateTime.UtcNow),
+            };
+        }
+        catch (Application.Exceptions.SlotNotFoundException ex)
+        {
+            throw new RpcException(new Status(StatusCode.NotFound, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            throw new RpcException(new Status(StatusCode.Internal, $"Internal error: {ex.Message}"));
+        }
     }
 }
